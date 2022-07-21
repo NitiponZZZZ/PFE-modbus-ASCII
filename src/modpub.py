@@ -1,93 +1,71 @@
 #!/usr/bin/env python3
-from socket import MsgFlag
 import rospy
-from std_msgs.msg import Int8MultiArray, Int16MultiArray
 from sensor_msgs.msg import BatteryState
-from modbus_driver import readData, writeData, readBattery, readStatus, batt0, batt1, batt2, batt3, batt4
-from pfe_modbus.msg import fanmsg
+from modbus_driver import readData, writeData, readBattery, readStatus, batt
+from pfe_modbus.msg import fanmsg, powersensormsg, statusmsg
 
 battery = BatteryState()
-
-status = Int8MultiArray()
+status = statusmsg()
 fan = fanmsg()
-ctrl = Int16MultiArray()
-power = Int16MultiArray()
+power = powersensormsg()
 
 
 def formatData():
-    readBattery(0)
-    battery.serial_number = '0'
-    battery.voltage = batt0[0]
-    battery.current = batt0[1]
-    battery.charge = batt0[2]
-    battery.capacity = batt0[3]
-    battery.percentage = batt0[4]
 
-    readBattery(1)
-    battery.serial_number = '1'
-    battery.voltage = batt1[0]
-    battery.current = batt1[1]
-    battery.charge = batt1[2]
-    battery.capacity = batt1[3]
-    battery.percentage = batt1[4]
-
-    readBattery(2)
-    battery.serial_number = '2'
-    battery.voltage = batt2[0]
-    battery.current = batt2[1]
-    battery.charge = batt2[2]
-    battery.capacity = batt2[3]
-    battery.percentage = batt2[4]
-
-    readBattery(3)
-    battery.serial_number = '3'
-    battery.voltage = batt3[0]
-    battery.current = batt3[1]
-    battery.charge = batt3[2]
-    battery.capacity = batt3[3]
-    battery.percentage = batt3[4]
-
-    readBattery(4)
-    # battery.header.stamp += 1
-    battery.serial_number = '4'
-    battery.voltage = batt4[0]
-    battery.current = batt4[1]
-    battery.charge = batt4[2]
-    battery.capacity = batt4[3]
-    battery.percentage = batt4[4]
-
-    status.data = readStatus()
+    status.Supply_status1 = readStatus()[0]
+    status.Power_supply_health1 = readStatus()[1]
+    status.Supply_status2 = readStatus()[2]
+    status.Power_supply_health2 = readStatus()[3]
+    status.Emergency_Switch = readStatus()[4]
+    status.Control_Switch = readStatus()[5]
 
     fan.fan1Speed = readData(0)[0]
     fan.fan1Temp = readData(0)[1]
     fan.fan2Speed = readData(0)[2]
     fan.fan2Temp = readData(0)[3]
 
-    ctrl.data = readData(1)
-    power.data = readData(2)
+    power.CTRLPowerSensorW = readData(2)[0]
+    power.CTRLPowerSensorI = readData(2)[1]
+    power.CTRLPowerSensorV = readData(2)[2]
+    power.PowerSensorW = readData(1)[0]
+    power.PowerSensorI = readData(1)[1]
+    power.PowerSensorV = readData(1)[2]
+
+
+def formatBatt(n):
+    readBattery(n)
+    battery.serial_number = str(n)
+    battery.voltage = batt[0]
+    battery.current = batt[1]
+    battery.charge = batt[2]
+    battery.capacity = batt[3]
+    battery.percentage = batt[4]
 
 
 def pfe_publiser():
-    pub_battery = rospy.Publisher('pfe_battery', BatteryState, queue_size=10)
-    pub_status = rospy.Publisher('pfe_status', Int8MultiArray, queue_size=10)
-    pub_fan = rospy.Publisher('pfe_fans', fanmsg, queue_size=10)
-    pub_ctrl = rospy.Publisher(
-        'pfe_sensors_ctrl', Int16MultiArray, queue_size=10)
-    pub_power = rospy.Publisher(
-        'pfe_sensors_power', Int16MultiArray, queue_size=10)
+    pub_battery = rospy.Publisher('pfe_battery', BatteryState, queue_size=1)
+    pub_status = rospy.Publisher('pfe_status', statusmsg, queue_size=1)
+    pub_fan = rospy.Publisher('pfe_fans', fanmsg, queue_size=1)
+    pub_power_sensor = rospy.Publisher(
+        'pfe_power_sensors', powersensormsg, queue_size=1)
+
     rospy.init_node('modbusPub', anonymous=True)
     rate = rospy.Rate(50)
-
+    n = 0
     while not rospy.is_shutdown():
-        # writeData(1, 1)
+        writeData(1, 1)
         formatData()
+        formatBatt(n)
 
         pub_battery.publish(battery)
         pub_fan.publish(fan)
-        pub_ctrl.publish(ctrl)
-        pub_power.publish(power)
+        pub_power_sensor.publish(power)
         pub_status.publish(status)
         rate.sleep()
+        if n < 4:
+            n += 1
+        else:
+            n = 0
 
 
 if __name__ == '__main__':

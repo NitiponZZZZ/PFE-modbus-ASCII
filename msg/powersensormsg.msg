@@ -1,0 +1,7 @@
+int32 PowerSensorW
+int32 PowerSensorV
+int32 PowerSensorI
+
+int32 CTRLPowerSensorW
+int32 CTRLPowerSensorV
+int32 CTRLPowerSensorI
