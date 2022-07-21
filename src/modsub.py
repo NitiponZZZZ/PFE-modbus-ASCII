@@ -1,37 +1,33 @@
 #!/usr/bin/env python3
 
 import rospy
-from std_msgs.msg import String
+from sensor_msgs.msg import BatteryState
+from pfe_modbus.msg import fanmsg, powersensormsg, statusmsg
 
 
 def callback1(data):
-    rospy.loginfo('Batt %s', data.data)
+    rospy.loginfo('Batt %s', data)
 
 
 def callback2(data):
-    rospy.loginfo('fan %s', data.data)
+    rospy.loginfo('Status %s', data)
 
 
 def callback3(data):
-    rospy.loginfo('ctrl %s', data.data)
+    rospy.loginfo('Fan %s', data)
 
 
 def callback4(data):
-    rospy.loginfo('power %s', data.data)
-
-
-def callback5(data):
-    rospy.loginfo('status %s', data.data)
+    rospy.loginfo('Sensor %s', data)
 
 
 def pfe_listener():
     rospy.init_node('modbusSup', anonymous=True)
 
-    rospy.Subscriber('pfe_battery', String, callback1)
-    rospy.Subscriber('pfe_fans', String, callback2)
-    rospy.Subscriber('pfe_sensors_ctrl', String, callback3)
-    rospy.Subscriber('pfe_sensors_power', String, callback4)
-    rospy.Subscriber('pfe_status', String, callback5)
+    rospy.Subscriber('pfe_battery', BatteryState, callback1)
+    #rospy.Subscriber('pfe_status', statusmsg, callback2)
+    #rospy.Subscriber('pfe_fans', fanmsg, callback3)
+   # rospy.Subscriber('pfe_power_sensors', powersensormsg, callback4)
 
     rospy.spin()
 
