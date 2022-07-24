@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 import random
+import string
 import minimalmodbus
 
-master = minimalmodbus.Instrument('/dev/pts/4', 1, minimalmodbus.MODE_ASCII)
+master = minimalmodbus.Instrument('/dev/pts/1', 1, minimalmodbus.MODE_ASCII)
 master.serial.baudrate = 115200
 master.serial.bytesize = 8
 master.serial.stopbits = 1
-master.serial.timeout = 0.05
+master.serial.timeout = 0.5
 master.clear_buffers_before_each_transaction = True
 
 batt = [0, 0, 0, 0, 0]
 
 
 def readBattery(index: bytes):
+
     if index == 0:
         batt[0] = master.read_register(0, 0, 3)
         batt[1] = master.read_register(1, 0, 3)
@@ -56,7 +58,6 @@ def readStatus():
 
 
 def readData(type):
-
     if type == 0:
         Read_Fan1S = master.read_register(25, 0, 3)
         Read_Fan1T = master.read_register(26, 0, 3)
@@ -77,8 +78,8 @@ def readData(type):
         return Read_pow_W, Read_pow_I, Read_pow_V
 
 
-def writeData(hold: bool, coils: bool):
-    if hold:
+def writeData(mode: string, val: int):
+    if mode == "holding":
         Voltage = random.randint(24900, 25000)
         Current = random.randint(19900, 20000)
         Charge = random.randint(290, 300)
@@ -133,7 +134,7 @@ def writeData(hold: bool, coils: bool):
         master.write_register(32, watt, 0)
         master.write_register(33, I, 0)
         master.write_register(34, V, 0)
-    if coils:
+    if mode == "coil":
         Supply_status_1 = 1
         Power_supply_health_1 = 1
         Supply_status_2 = 1
@@ -147,16 +148,16 @@ def writeData(hold: bool, coils: bool):
         master.write_bit(3, Power_supply_health_2, 15)
         master.write_bit(4, Emergency_Switch, 15)
         master.write_bit(5, Control_Switch, 15)
-    print("Write Mode ON")
 
-    def requestCharge(value):
-        master.write_bit(6, value, 15)
+    if mode == "charge":
+        master.write_bit(10, val, 5)
         print("requestCharge")
+        #print("Write Mode ON")
 
-    def requestStop(value):
-        master.write_bit(7, value, 15)
+    if mode == "stop":
+        master.write_bit(11, val, 5)
         print("requestStop")
 
-    def fan2speedcontrol(value):
-        master.write_register(35, value, 0)
-        print("set fan speed : "+str(value))
+    if mode == "fan":
+        master.write_register(35, val, 0)
+        print("set fan speed : "+str(val))

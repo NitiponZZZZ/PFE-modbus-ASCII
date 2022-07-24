@@ -3,6 +3,7 @@ import rospy
 from sensor_msgs.msg import BatteryState
 from modbus_driver import readData, writeData, readBattery, readStatus, batt
 from pfe_modbus.msg import fanmsg, powersensormsg, statusmsg
+from pfe_modbus.srv import fancontrol, fancontrolResponse
 
 battery = BatteryState()
 status = statusmsg()
@@ -11,29 +12,34 @@ power = powersensormsg()
 
 
 def formatData():
+    try:
+        status.Supply_status1 = readStatus()[0]
+        status.Power_supply_health1 = readStatus()[1]
+        status.Supply_status2 = readStatus()[2]
+        status.Power_supply_health2 = readStatus()[3]
+        status.Emergency_Switch = readStatus()[4]
+        status.Control_Switch = readStatus()[5]
 
-    status.Supply_status1 = readStatus()[0]
-    status.Power_supply_health1 = readStatus()[1]
-    status.Supply_status2 = readStatus()[2]
-    status.Power_supply_health2 = readStatus()[3]
-    status.Emergency_Switch = readStatus()[4]
-    status.Control_Switch = readStatus()[5]
+        fan.fan1Speed = readData(0)[0]
+        fan.fan1Temp = readData(0)[1]
+        fan.fan2Speed = readData(0)[2]
+        fan.fan2Temp = readData(0)[3]
 
-    fan.fan1Speed = readData(0)[0]
-    fan.fan1Temp = readData(0)[1]
-    fan.fan2Speed = readData(0)[2]
-    fan.fan2Temp = readData(0)[3]
-
-    power.CTRLPowerSensorW = readData(2)[0]
-    power.CTRLPowerSensorI = readData(2)[1]
-    power.CTRLPowerSensorV = readData(2)[2]
-    power.PowerSensorW = readData(1)[0]
-    power.PowerSensorI = readData(1)[1]
-    power.PowerSensorV = readData(1)[2]
+        power.CTRLPowerSensorW = readData(2)[0]
+        power.CTRLPowerSensorI = readData(2)[1]
+        power.CTRLPowerSensorV = readData(2)[2]
+        power.PowerSensorW = readData(1)[0]
+        power.PowerSensorI = readData(1)[1]
+        power.PowerSensorV = readData(1)[2]
+    except rospy.ROSInterruptException:
+        pass
 
 
 def formatBatt(n):
-    readBattery(n)
+    try:
+        readBattery(n)
+    except rospy.ROSInterruptException:
+        pass
     battery.serial_number = str(n)
     battery.voltage = batt[0]
     battery.current = batt[1]
@@ -48,12 +54,14 @@ def pfe_publiser():
     pub_fan = rospy.Publisher('pfe_fans', fanmsg, queue_size=1)
     pub_power_sensor = rospy.Publisher(
         'pfe_power_sensors', powersensormsg, queue_size=1)
-
     rospy.init_node('modbusPub', anonymous=True)
+
     rate = rospy.Rate(50)
     n = 0
     while not rospy.is_shutdown():
-        writeData(1, 1)
+
+        writeData("holding", 0)
+        writeData("coil", 0)
         formatData()
         formatBatt(n)
 
@@ -69,6 +77,7 @@ def pfe_publiser():
 
 
 if __name__ == '__main__':
+    writeData("coil", 0)
     try:
         pfe_publiser()
     except rospy.ROSInterruptException:

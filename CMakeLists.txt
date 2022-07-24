@@ -59,6 +59,8 @@ add_message_files(
  add_service_files(
    FILES
    fancontrol.srv
+   chargecontrol.srv
+   stopcontrol.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -161,7 +163,9 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-   src/modpub.py ui/pfeUI.py
+   src/modpub.py ui/pfeUI.py 
+   src/modbus_service.py 
+   src/modbus_serviceCall.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
