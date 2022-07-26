@@ -56,7 +56,7 @@ def pfe_publiser():
         'pfe_power_sensors', powersensormsg, queue_size=1)
     rospy.init_node('modbusPub', anonymous=True)
 
-    rate = rospy.Rate(50)
+    rate = rospy.Rate(10)
     n = 0
     while not rospy.is_shutdown():
 

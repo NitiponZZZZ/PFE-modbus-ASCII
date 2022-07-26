@@ -3,7 +3,8 @@ import random
 import string
 import minimalmodbus
 
-master = minimalmodbus.Instrument('/dev/pts/1', 1, minimalmodbus.MODE_ASCII)
+master = minimalmodbus.Instrument(
+    '/dev/pts/3', 1, minimalmodbus.MODE_ASCII)  # change port to stm32 port
 master.serial.baudrate = 115200
 master.serial.bytesize = 8
 master.serial.stopbits = 1
@@ -150,14 +151,13 @@ def writeData(mode: string, val: int):
         master.write_bit(5, Control_Switch, 15)
 
     if mode == "charge":
-        master.write_bit(10, val, 5)
-        print("requestCharge")
-        #print("Write Mode ON")
+        master.write_bit(6, val, 5)
+        # print("requestCharge")
 
     if mode == "stop":
-        master.write_bit(11, val, 5)
-        print("requestStop")
+        master.write_bit(7, val, 5)
+        # print("requestStop")
 
     if mode == "fan":
         master.write_register(35, val, 0)
-        print("set fan speed : "+str(val))
+        #print("set fan speed : "+str(val))

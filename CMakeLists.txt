@@ -163,7 +163,8 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-   src/modpub.py ui/pfeUI.py 
+   src/modpub.py 
+   src/pfeUI.py 
    src/modbus_service.py 
    src/modbus_serviceCall.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
